@@ -6,6 +6,7 @@ const userController = require('../controllers/userController');
 
 router.post('/', userController.createUser);
 router.post('/getOTP', userController.genrateOTP);
+router.post('/login', userController.loginUser);
 // Add more routes as needed
 
 module.exports = router;
