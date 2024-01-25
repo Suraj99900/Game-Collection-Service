@@ -3,6 +3,7 @@ const { ValidationError } = require('../exceptions/errorHandlers');
 const { sendOtp } = require('../services/twilioConfig'); // Create twilioConfig.js and implement sendOtp function
 const crypto = require('crypto');
 const Otp = require('../models/otp');
+const UserAmount = require('../models/userAmount');
 const bcrypt = require('bcrypt');
 const saltRounds = 10; // Number of salt rounds for bcrypt
 
@@ -29,16 +30,20 @@ const createUser = async (req, res) => {
             const hashedPassword = await bcrypt.hash(password, saltRounds);
 
             // Create a new user instance with the provided data and hashed password
-            const user = new User({
-                username,
-                phoneNumber,
-                password: hashedPassword,
-                status: status || 'active',
-                deleted: deleted || false,
-            });
+            const user = await User.createUser(username,phoneNumber,hashedPassword,status,false);
 
             // Save the user to the database
-            await user.save();
+            let savedUser = await user.save();
+            // Create a new UserAmount instance for the user
+            const userAmountData = {
+                user_id: savedUser.id,
+                available_amount: 0,
+                transaction_type: 1,
+                value: 0
+            };
+
+            const userAmount = await UserAmount.insertUserAmount(userAmountData);
+            await userAmount.save();
         } else {
             throw new ValidationError('Please enter a valid otp');
         }
@@ -67,7 +72,7 @@ const genrateOTP = async (req, res) => {
         }
 
         // Check if the phone number exists in the user table
-        const userExists = await User.exists({ phoneNumber: phone_number });
+        const userExists = await User.checkUserExist(phone_number);
 
         if (userExists == null) {
             // Check if an active OTP already exists for the phone number
@@ -123,24 +128,63 @@ const loginUser = async (req, res) => {
         if (!phoneNumber || !password) {
             throw new ValidationError('Phone number and password are required');
         }
-        var sPhoneNumber = '+91'+phoneNumber;
+        var sPhoneNumber = '+91' + phoneNumber;
         // Find the user by phoneNumber
-        const user = await User.findOne({
-            phoneNumber: sPhoneNumber,
-            status: 'active',
-            deleted: false,
-        });
+        const user = await User.fetchUserByPhoneNumber(sPhoneNumber);
 
         if (user) {
             // Compare the provided password with the hashed password in the database
             const passwordMatch = await bcrypt.compare(password, user.password);
             if (passwordMatch) {
                 // Passwords match, login successful
-                res.status(200).json({ status: 200, message: 'Login successful' , body: user });
+                res.status(200).json({ status: 200, message: 'Login successful', body: user });
             } else {
                 // Passwords do not match
                 throw new ValidationError('Invalid password');
             }
+        } else {
+            // User not found
+            throw new ValidationError('User not found or inactive');
+        }
+    } catch (error) {
+        console.error(error);
+
+        // Handle specific validation error
+        if (error instanceof ValidationError) {
+            res.status(401).json({ status: 401, message: error.message });
+        } else {
+            // Generic error handling
+            res.status(500).json({ status: 500, error: 'Internal Server Error' });
+        }
+    }
+};
+
+
+const personalInfo = async (req, res) => {
+    try {
+        const { userId } = req.params;
+
+        // Validate request data
+        if (!userId) {
+            throw new ValidationError('User ID is required');
+        }
+
+        // Find the user by userId
+        const user = await User.fetchUserByUserId(userId);
+
+        if (user) {
+            // Find the user amount details by userId
+            const userAmountDetails = await UserAmount.currentBalanceByUserId(userId);
+
+            // Include user amount details in the response
+            const response = {
+                userId: user._id,
+                username: user.username,
+                phoneNumber: user.phoneNumber,
+                userAmount: userAmountDetails || null,
+            };
+
+            res.status(200).json({ status: 200, message: 'User details fetched successfully', body: response });
         } else {
             // User not found
             throw new ValidationError('User not found or inactive');
@@ -168,5 +212,6 @@ module.exports = {
     test,
     genrateOTP,
     loginUser,
+    personalInfo,
     // Add more controller methods as needed
 };

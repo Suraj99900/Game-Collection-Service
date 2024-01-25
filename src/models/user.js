@@ -13,4 +13,34 @@ const userSchema = new mongoose.Schema({
 
 const User = mongoose.model('User', userSchema);
 
-module.exports = User;
+const fetchUserByUserId = async (userId = '')=>{
+    return User.findOne({
+        _id: userId,
+        status: 'active',
+        deleted: false,
+    });
+};
+
+const  fetchUserByPhoneNumber = async (sPhoneNumber)=>{
+    return User.findOne({
+        phoneNumber: sPhoneNumber,
+        status: 'active',
+        deleted: false,
+    });
+};
+
+const checkUserExist = async (sPhoneNumber)=>{
+    return User.exists({ phoneNumber: sPhoneNumber });
+};
+
+const createUser = async (username,phoneNumber,hashedPassword,status = 'active',deleted = false)=>{
+    return new User({
+        username,
+        phoneNumber,
+        password: hashedPassword,
+        status: status || 'active',
+        deleted: deleted || false,
+    });
+};
+
+module.exports = {User,fetchUserByUserId,fetchUserByPhoneNumber,checkUserExist,createUser};
