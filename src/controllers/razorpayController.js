@@ -125,6 +125,10 @@ const validateOrder = async (req, res) => {
     }
 };
 
+const failOrder = async (req,res)=>{
+    
+}
+
 
 function hmac_sha256(data, key) {
     const hmac = crypto.createHmac('sha256', key);
