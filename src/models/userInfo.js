@@ -32,14 +32,14 @@ async function insertRecord(data) {
 
 async function updateRecord(_id, data) {
     try {
-        const result = await UserInfo.findOneAndUpdate({ _id: _id }, data, { new: true });
+        const result = await UserInfo.findOneAndUpdate({ _id: _id ,  status: 'active', deleted: false}, data, { new: true });
         return result;
     } catch (error) {
         throw error;
     }
 }
 
-async function deleteRecord(_id) {
+async function deleteRecordByRecordID(_id) {
     try {
         const result = await UserInfo.findOneAndUpdate({ _id: _id, status: 'active', deleted: false },
             { $set: { status: 'inactive', deleted: true, updatedOn: new Date() } },
@@ -50,9 +50,20 @@ async function deleteRecord(_id) {
     }
 }
 
+async function deleteRecordByUserId(user_id) {
+    try {
+        const result = await UserInfo.findOneAndUpdate({ user_id: user_id, status: 'active', deleted: false },
+            { $set: { status: 'inactive', deleted: true, updatedOn: new Date() } },
+            { new: true });
+        return result;
+    } catch (error) {
+        throw error;
+    }
+}
+
 async function fetchAllRecords() {
     try {
-        const result = await UserInfo.find();
+        const result = await UserInfo.find({ status: 'active', deleted: false});
         return result;
     } catch (error) {
         throw error;
@@ -61,7 +72,7 @@ async function fetchAllRecords() {
 
 async function fetchRecordById(recordId) {
     try {
-        const result = await UserInfo.findById(recordId);
+        const result = await UserInfo.findOne({'_id': recordId ,  status: 'active', deleted: false});
         return result;
     } catch (error) {
         throw error;
@@ -70,7 +81,7 @@ async function fetchRecordById(recordId) {
 
 async function fetchRecordByUserId(userId) {
     try {
-        const result = await UserInfo.findOne({ user_id: userId });
+        const result = await UserInfo.findOne({ user_id: userId ,  status: 'active', deleted: false });
         return result;
     } catch (error) {
         throw error;
@@ -79,7 +90,7 @@ async function fetchRecordByUserId(userId) {
 
 async function fetchRecordByAccountNumber(accountNumber) {
     try {
-        const result = await UserInfo.findOne({ account_number: accountNumber });
+        const result = await UserInfo.findOne({ account_number: accountNumber,   status: 'active', deleted: false });
         return result;
     } catch (error) {
         throw error;
@@ -91,7 +102,8 @@ async function fetchRecordByAccountNumber(accountNumber) {
 module.exports = {
     insertRecord,
     updateRecord,
-    deleteRecord,
+    deleteRecordByUserId,
+    deleteRecordByRecordID,
     fetchAllRecords,
     fetchRecordById,
     fetchRecordByUserId,

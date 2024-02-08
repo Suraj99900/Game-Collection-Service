@@ -46,4 +46,12 @@ const updateOrder = async (orderId, oUpdateFields) => {
     }
 }
 
-module.exports = { Operation, insertCreatedOrder, updateOrder };
+
+const fetchAllOrderByUserId = async (userId)=>{
+    try {
+        return Operation.find({ user_id: userId, deleted: false });
+    } catch (error) {
+        throw error;
+    }
+}
+module.exports = { Operation, insertCreatedOrder, updateOrder,fetchAllOrderByUserId };

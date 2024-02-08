@@ -43,4 +43,19 @@ const createUser = async (username,phoneNumber,hashedPassword,status = 'active',
     });
 };
 
-module.exports = {User,fetchUserByUserId,fetchUserByPhoneNumber,checkUserExist,createUser};
+const updateUser = async (userId, updatedFields) => {
+    try {
+        const user = await User.findOneAndUpdate(
+            { _id: userId, status: 'active', deleted: false },
+            { $set: { ...updatedFields }, updatedOn: new Date() },
+            { new: true }
+        );
+
+        return user;
+    } catch (error) {
+        console.log(error);
+        throw error;
+    }
+};
+
+module.exports = {User,fetchUserByUserId,fetchUserByPhoneNumber,checkUserExist,createUser,updateUser};

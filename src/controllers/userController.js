@@ -30,7 +30,7 @@ const createUser = async (req, res) => {
             const hashedPassword = await bcrypt.hash(password, saltRounds);
 
             // Create a new user instance with the provided data and hashed password
-            const user = await User.createUser(username,phoneNumber,hashedPassword,status,false);
+            const user = await User.createUser(username, phoneNumber, hashedPassword, status, false);
 
             // Save the user to the database
             let savedUser = await user.save();
@@ -159,6 +159,114 @@ const loginUser = async (req, res) => {
     }
 };
 
+const resetGenrateOtp = async (req, res) => {
+    try {
+        var { phone_number } = req.body;
+
+        if (!phone_number) {
+            return res.status(400).json({ message: 'Missing Phone Number Parameter' });
+        }
+        phone_number = "+91" + phone_number;
+        // Check if the phone number exists in the user table
+        const userExists = await User.checkUserExist(phone_number);
+
+        if (userExists) {
+            // Check if an active OTP already exists for the phone number
+            const activeOtp = await Otp.findOne({
+                number: phone_number,
+                status: 'active',
+                deleted: false,
+                expirationTime: { $gt: new Date() }, // Check if expirationTime is greater than the current time
+            });
+
+            if (activeOtp) {
+                // If an active OTP exists, inform the user that OTP has already been sent
+                return res.status(200).json({ 'status': 200, message: 'OTP already sent. Please check your messages.' });
+            }
+
+            // Generate a 6-digit OTP
+            const otp = crypto.randomBytes(3).toString('hex').toUpperCase().slice(0, 6);
+
+            // Send OTP via SMS (implement this function in twilioConfig.js)
+            const isOtpSent = await sendOtp(phone_number, otp);
+
+            // Save OTP to the OTP model
+            const otpData = new Otp({
+                number: phone_number,
+                otp: otp,
+                status: 'active',
+                deleted: false,
+                expirationTime: new Date(Date.now() + 30 * 60 * 1000), // Set expiration time to 30 minutes from now
+            });
+
+            await otpData.save();
+
+            if (isOtpSent) {
+                return res.status(200).json({ 'status': 200, message: 'OTP sent successfully' });
+            } else {
+                return res.status(500).json({ 'status': 500, message: 'Failed to send OTP' });
+            }
+        } else {
+
+            return res.status(400).json({ 'status': 500, message: 'Number not registered.' });
+        }
+    } catch (error) {
+        console.error('Error generating OTP:', error);
+        return res.status(500).json({ 'status': 500, message: 'Internal Server Error' });
+    }
+};
+
+
+const updatePassword = async (req, res) => {
+    try {
+        var { phone_number, new_password, otp } = req.body;
+
+        if (!phone_number || !new_password || !otp) {
+            return res.status(400).json({ message: 'Missing required parameters' });
+        }
+
+        phone_number = "+91" + phone_number;
+
+        // Check if the phone number exists in the user table
+        const userExists = await User.fetchUserByPhoneNumber(phone_number);
+
+        if (!userExists) {
+            return res.status(400).json({ 'status': 400, message: 'Number not registered.' });
+        }
+
+        // Check if the provided OTP is valid
+        const validOtp = await Otp.findOne({
+            number: phone_number,
+            otp: otp,
+            status: 'active',
+            deleted: false,
+            expirationTime: { $gt: new Date() },
+        });
+
+        if (!validOtp) {
+            return res.status(400).json({ 'status': 400, message: 'Invalid OTP or OTP expired' });
+        }
+        const password = await bcrypt.hash(new_password, saltRounds);
+        // Update user password
+        const userIdAsString = userExists._id.toString();
+        const updatedUser = await User.updateUser(userIdAsString, {password : password });
+        // Set OTP status to used
+        validOtp.status = 'used';
+        if(updatedUser){
+        await validOtp.save();
+
+        return res.status(200).json({ 'status': 200, message: 'Password updated successfully' });
+        }else{
+            return res.status(500).json({ 'status': 500, message: 'Something went wrong' });
+        }
+
+    } catch (error) {
+        console.error('Error updating password:', error);
+        return res.status(500).json({ 'status': 500, message: 'Internal Server Error' });
+    }
+};
+
+
 
 const personalInfo = async (req, res) => {
     try {
@@ -213,5 +321,6 @@ module.exports = {
     genrateOTP,
     loginUser,
     personalInfo,
-    // Add more controller methods as needed
+    resetGenrateOtp,
+    updatePassword,
 };

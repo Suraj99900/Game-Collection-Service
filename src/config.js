@@ -3,7 +3,7 @@
 module.exports = {
     twilio: {
         accountSid: 'AC1ccfbaf5f87eca2d5d783199d3c3c9be',
-        authToken: '02b5cda22f009cef85188f855b463ef7',
+        authToken: 'ccc8411fd2ad404a6ab5fee948142926',
         twilioPhoneNumber: '+19787057732',
     },
     RAZORPAY: {
