@@ -64,19 +64,52 @@ async function fetchRecordById(recordId) {
     }
 }
 
+async function fetchRecordBywinTypeAndPeriod(type,Period) {
+    try {
+        const result = await winGame.findOne({ type: type ,period:Period,  status: 'active', deleted: false });
+        return result;
+    } catch (error) {
+        throw error;
+    }
+}
 async function fetchRecordBywinType(type) {
     try {
-        const result = await winGame.findOne({ type: type ,  status: 'active', deleted: false });
+        const result = await winGame.find({ type: type ,  status: 'active', deleted: false });
         return result;
     } catch (error) {
         throw error;
     }
 }
 
-async function fetchLastActiveRecord(type) {
+async function fetchRecordDeletedBywinType(type, sortByField = 'addedOn') {
     try {
         const result = await winGame
-            .findOne({ status: 'active', deleted: false, type:type })
+            .find({ type: type, status: 'inactive', deleted: true })
+            .sort({ addedOn: -1 }); // Sort in descending order based on the specified field
+
+        return result;
+    } catch (error) {
+        throw error;
+    }
+}
+
+async function fetchLastInActiveRecord() {
+    try {
+        const result = await winGame
+            .findOne({ status: 'inactive', deleted: true })
+            .sort({ addedOn: -1 }) // Sort in descending order based on addedOn
+            .limit(1);
+
+        return result;
+    } catch (error) {
+        throw error;
+    }
+}
+
+async function fetchLastActiveRecord() {
+    try {
+        const result = await winGame
+            .findOne({ status: 'active', deleted: false })
             .sort({ addedOn: -1 }) // Sort in descending order based on addedOn
             .limit(1);
 
@@ -92,9 +125,12 @@ async function fetchLastActiveRecord(type) {
 module.exports = {
     insertRecord,
     updateRecord,
-    fetchRecordBywinType,
+    fetchRecordBywinTypeAndPeriod,
     deleteRecordByRecordID,
+    fetchRecordBywinType,
     fetchAllRecords,
     fetchRecordById,
     fetchLastActiveRecord,
+    fetchRecordDeletedBywinType,
+    fetchLastInActiveRecord,
 };
