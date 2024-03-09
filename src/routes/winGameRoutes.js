@@ -16,4 +16,5 @@ router.get('/win-game/id/:id',winGameController.fetchRecordById);
 
 // User Bet Route
 router.post('/win-game/userbet',userWinGameController.insertWinUserBet);
+router.get('/win-game/userbet',userWinGameController.fetchUserWinRecord);
 module.exports = router;

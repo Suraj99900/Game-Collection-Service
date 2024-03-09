@@ -81,11 +81,14 @@ async function fetchRecordBywinType(type) {
     }
 }
 
-async function fetchRecordDeletedBywinType(type, sortByField = 'addedOn') {
+async function fetchRecordDeletedBywinType(type, sortByField = 'addedOn', sortOrder = 'desc') {
     try {
+        const sortQuery = {};
+        sortQuery[sortByField] = sortOrder === 'asc' ? 1 : -1;
+
         const result = await winGame
             .find({ type: type, status: 'inactive', deleted: true })
-            .sort({ addedOn: -1 }); // Sort in descending order based on the specified field
+            .sort(sortQuery);
 
         return result;
     } catch (error) {

@@ -1,13 +1,9 @@
 const { ValidationError } = require('../exceptions/errorHandlers');
 const winUserBetModel = require('../models/winUserBet');
 const UserAmount = require('../models/userAmount');
+const userGameModel = require('../models/gameWinner.js');
 const insertWinUserBet = async (req, res) => {
     const { period, user_id, type, color, number, amount } = req.body;
-    console.log(type);
-    console.log(color);
-    console.log(number);
-    console.log(amount);
-    console.log(user_id);
     try {
         // Validate request data
         if (!type || !period || !user_id || !color || !number || !amount) {
@@ -20,7 +16,7 @@ const insertWinUserBet = async (req, res) => {
         }
         const userAmountDetails = await UserAmount.currentBalanceByUserId(user_id);
 
-        if(userAmountDetails.available_amount < amount){
+        if (userAmountDetails.available_amount < amount) {
             throw new ValidationError('Amount is less.');
         }
         // Adjust amount as needed
@@ -71,6 +67,34 @@ const insertWinUserBet = async (req, res) => {
     }
 }
 
+const fetchUserWinRecord = async (req, res) => {
+    const { gameType, user_id } = req.query;
+
+    try {
+        // Validate request data
+        if (!gameType || !user_id) {
+            throw new ValidationError('gameType, user_id are required');
+        }
+
+        const aUserWinRecord = await userGameModel.fetchRecordByUserIdAndType(user_id,gameType);
+
+        if (aUserWinRecord) {
+            res.status(200).json({ status: 200, message: 'Win User Bet Record fetch successfully', data: aUserWinRecord });
+        } else {
+            res.status(500).json({ status: 500, error: 'Error While Inserting Data' });
+        }
+    } catch (error) {
+        console.error(error);
+
+        if (error instanceof ValidationError) {
+            res.status(400).json({ status: 400, error: error.message });
+        } else {
+            res.status(500).json({ status: 500, error: 'Internal Server Error' });
+        }
+    }
+}
+
 module.exports = {
     insertWinUserBet,
+    fetchUserWinRecord,
 };

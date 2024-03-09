@@ -80,7 +80,16 @@ async function fetchRecordById(id) {
 }
 async function fetchRecordByUserId(userID) {
     try {
-        const result = await WinGame.findOne({ user_id: userID, status: 'active', deleted: false });
+        const result = await WinGame.find({ user_id: userID, status: 'active', deleted: false });
+        return result;
+    } catch (error) {
+        throw error;
+    }
+}
+
+async function fetchRecordByUserIdAndType(userID,gameType) {
+    try {
+        const result = await WinGame.find({ user_id: userID,gameType: gameType, status: 'active', deleted: false });
         return result;
     } catch (error) {
         throw error;
@@ -94,4 +103,6 @@ module.exports = {
     fetchAllRecords,
     fetchRecordByGameId,
     fetchRecordById,
+    fetchRecordByUserId,
+    fetchRecordByUserIdAndType,
 };
