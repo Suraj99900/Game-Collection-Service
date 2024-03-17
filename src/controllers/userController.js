@@ -249,14 +249,15 @@ const updatePassword = async (req, res) => {
         const password = await bcrypt.hash(new_password, saltRounds);
         // Update user password
         const userIdAsString = userExists._id.toString();
-        const updatedUser = await User.updateUser(userIdAsString, {password : password });
+
+        const updatedUser = await User.updateUser(userIdAsString, { password: password });
         // Set OTP status to used
         validOtp.status = 'used';
-        if(updatedUser){
-        await validOtp.save();
+        if (updatedUser) {
+            await validOtp.save();
 
-        return res.status(200).json({ 'status': 200, message: 'Password updated successfully' });
-        }else{
+            return res.status(200).json({ 'status': 200, message: 'Password updated successfully' });
+        } else {
             return res.status(500).json({ 'status': 500, message: 'Something went wrong' });
         }
 
@@ -311,6 +312,27 @@ const personalInfo = async (req, res) => {
 };
 
 
+// Fetch Total User
+
+const fetchTotalUser = async (req, res) => {
+    try {
+
+        const oUserCount = await User.fetchTotalUser();
+        const iTotalUser = oUserCount.length;
+        res.status(200).json({ status: 200, message: "User count fetched successfully", body: iTotalUser });
+    } catch (error) {
+        console.error(error);
+
+        // Handle specific validation error
+        if (error instanceof ValidationError) {
+            res.status(401).json({ status: 401, message: error.message });
+        } else {
+            // Generic error handling
+            res.status(500).json({ status: 500, error: 'Internal Server Error' });
+        }
+    }
+}
+
 const test = async (req, res) => {
     res.status(201).json({ message: 'working' });
 };
@@ -323,4 +345,5 @@ module.exports = {
     personalInfo,
     resetGenrateOtp,
     updatePassword,
+    fetchTotalUser,
 };

@@ -1,5 +1,6 @@
 const { ValidationError } = require('../exceptions/errorHandlers');
 const winUserBetModel = require('../models/winUserBet');
+const winGame = require('../models/winGame.js');
 const UserAmount = require('../models/userAmount');
 const userGameModel = require('../models/gameWinner.js');
 const insertWinUserBet = async (req, res) => {
@@ -76,7 +77,7 @@ const fetchUserWinRecord = async (req, res) => {
             throw new ValidationError('gameType, user_id are required');
         }
 
-        const aUserWinRecord = await userGameModel.fetchRecordByUserIdAndType(user_id,gameType);
+        const aUserWinRecord = await userGameModel.fetchUserWinRecordData(user_id,gameType,'win');
 
         if (aUserWinRecord) {
             res.status(200).json({ status: 200, message: 'Win User Bet Record fetch successfully', data: aUserWinRecord });
@@ -94,7 +95,57 @@ const fetchUserWinRecord = async (req, res) => {
     }
 }
 
+
+const fetchUserLossRecord = async(req,res)=>{
+    const { gameType, user_id } = req.query;
+    try {
+        // Validate request data
+        if (!gameType || !user_id) {
+            throw new ValidationError('gameType, user_id are required');
+        }
+
+        const aUserLossRecord = await winUserBetModel.fetchLossRecord(user_id,gameType);
+
+        if (aUserLossRecord) {
+            res.status(200).json({ status: 200, message: 'Loass user bet record fetch successfully', data: aUserLossRecord });
+        } else {
+            res.status(500).json({ status: 500, error: 'Error While Inserting Data' });
+        }
+    } catch (error) {
+        console.error(error);
+
+        if (error instanceof ValidationError) {
+            res.status(400).json({ status: 400, error: error.message });
+        } else {
+            res.status(500).json({ status: 500, error: 'Internal Server Error' });
+        }
+    }
+}
+
+
+const fetchWinGameActiveTableData = async(req,res)=>{
+    try {
+
+        const aRecord = await winGame.fetchCurrentActiveRecord();
+
+        if (aRecord) {
+            res.status(200).json({ status: 200, message: 'Win Record fetch successfully', body: aRecord });
+        } else {
+            res.status(500).json({ status: 500, error: 'Error While Inserting Data' });
+        }
+    } catch (error) {
+        console.error(error);
+
+        if (error instanceof ValidationError) {
+            res.status(400).json({ status: 400, error: error.message });
+        } else {
+            res.status(500).json({ status: 500, error: 'Internal Server Error' });
+        }
+    }
+}
 module.exports = {
     insertWinUserBet,
     fetchUserWinRecord,
+    fetchUserLossRecord,
+    fetchWinGameActiveTableData,
 };

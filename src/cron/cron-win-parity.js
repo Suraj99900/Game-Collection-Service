@@ -28,7 +28,7 @@ cron.schedule('*/3 * * * *', async () => {
         // Schedule a task to decide the winner when 30 seconds are left before the next cron entry
         setTimeout(() => {
             scheduleDecideWinner(period);
-        }, 150000);
+        }, 175000);
 
     } catch (error) {
         console.error('Error while inserting default entries:', error);

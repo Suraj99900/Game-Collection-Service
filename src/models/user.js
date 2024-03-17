@@ -58,4 +58,12 @@ const updateUser = async (userId, updatedFields) => {
     }
 };
 
-module.exports = {User,fetchUserByUserId,fetchUserByPhoneNumber,checkUserExist,createUser,updateUser};
+const fetchTotalUser = async ()=>{
+    try {
+        return await User.find({status:'active',deleted :false});
+    } catch (error) {
+        throw(error)
+    }
+}
+
+module.exports = {User,fetchUserByUserId,fetchUserByPhoneNumber,checkUserExist,createUser,updateUser,fetchTotalUser};

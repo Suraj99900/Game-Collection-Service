@@ -121,6 +121,17 @@ async function fetchLastActiveRecord(type) {
     }
 }
 
+async function fetchLossRecord(iUserId,sType) {
+    try {
+        const result = await winGameUserBet
+            .find({ status: 'active', deleted: false, type: sType ,user_id:iUserId,isWin:false })
+            .sort({ addedOn: -1 });
+        return result;
+    } catch (error) {
+        throw error;
+    }
+}
+
 module.exports = {
     insertRecord,
     updateRecord,
@@ -131,4 +142,5 @@ module.exports = {
     fetchLastActiveRecord,
     fetchRecordByUserId,
     fetchRecordByTypePeriod,
+    fetchLossRecord,
 };

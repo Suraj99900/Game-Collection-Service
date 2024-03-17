@@ -33,4 +33,8 @@ router.put('/report-complain/:reportId',reportComplaintsSuggetion.updateReport);
 router.get('/report-complain/:iUserID',reportComplaintsSuggetion.getAllReports);
 router.get('/report-complain/:reportId',reportComplaintsSuggetion.getReportById);
 router.delete('/report-complain/:reportId',reportComplaintsSuggetion.deleteReport);
+
+//! Total User Count
+
+router.get('/user-count',userController.fetchTotalUser);
 module.exports = router;

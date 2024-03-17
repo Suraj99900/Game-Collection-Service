@@ -17,6 +17,44 @@ const winGameSchema = new Schema({
 
 const WinGame = model('gamewinner', winGameSchema);
 
+async function fetchUserWinRecordData(userID, sType, gameType) {
+    try {
+        const result = await WinGame.aggregate([
+            {
+                $match: {
+                    status: 'active',
+                    deleted: false,
+                    user_id: userID,
+                    type: sType,
+                    gameType: gameType
+                }
+            },
+            {
+                $addFields: {
+                    gameIdObjectId: { $toObjectId: "$gameid" }
+                }
+            },
+            {
+                $lookup: {
+                  from: "wingameuserbets",
+                  localField: "gameIdObjectId",
+                  foreignField: "_id",
+                  as: "gameDetails",
+                }
+              },
+              {
+                $project: {
+                  gameIdObjectId: 0
+                }
+              }
+        ]).sort({ addedOn: -1 });
+
+        return result;
+    } catch (error) {
+        throw (error)
+    }
+}
+
 async function insertRecord(data) {
     try {
         const winGameRecord = new WinGame(data);
@@ -87,9 +125,9 @@ async function fetchRecordByUserId(userID) {
     }
 }
 
-async function fetchRecordByUserIdAndType(userID,gameType) {
+async function fetchRecordByUserIdAndType(userID, sType, gameType) {
     try {
-        const result = await WinGame.find({ user_id: userID,gameType: gameType, status: 'active', deleted: false });
+        const result = await WinGame.find({ user_id: userID, type: sType, gameType: gameType, status: 'active', deleted: false });
         return result;
     } catch (error) {
         throw error;
@@ -105,4 +143,5 @@ module.exports = {
     fetchRecordById,
     fetchRecordByUserId,
     fetchRecordByUserIdAndType,
+    fetchUserWinRecordData,
 };
