@@ -1,6 +1,7 @@
 const UserAmount = require('../models/userAmount');
 const moment = require('moment');
 const { ValidationError } = require('../exceptions/errorHandlers');
+const { User } = require('../models/user');
 
 const InsertDebitOrder = async (req, res) => {
     try {
@@ -83,6 +84,74 @@ const fetchDebitRecordByUserId = async (req,res)=>{
 }
 
 
+const fetchAllDebitRecord = async (req,res)=>{
+    try {
+
+        // Fetch Debit Amount
+        const userDebitAmoount = await UserAmount.fetchAllDebitRecord();
+
+        if (userDebitAmoount) {
+            res.status(200).json({ status: 200, message: 'Successfully', body: userDebitAmoount});
+        }
+
+    } catch (error) {
+        console.error(error);
+        if (error instanceof ValidationError) {
+            res.status(error.statusCode).json({ status: 500, message: error.message });
+        } else {
+            // Generic error handling
+            res.status(500).json({ status: 500, error: 'Internal Server Error' });
+        }
+    }
+}
+
+const fetchAllDebitDetialsWithBanksById = async (req,res)=>{
+    const {id} = req.params;
+    try {
+
+        // Fetch Debit Amount
+        const userDebitAmoount = await UserAmount.fetchAllDebitDetialsWithBanksById(id);
+
+        if (userDebitAmoount) {
+            res.status(200).json({ status: 200, message: 'Successfully', body: userDebitAmoount});
+        }
+
+    } catch (error) {
+        console.error(error);
+        if (error instanceof ValidationError) {
+            res.status(error.statusCode).json({ status: 500, message: error.message });
+        } else {
+            // Generic error handling
+            res.status(500).json({ status: 500, error: 'Internal Server Error' });
+        }
+    }
+}
+
+const updateDebitRecord = async (req, res) => {
+    try {
+        const { id } = req.params; // Assuming you pass the ID of the record to be updated in the URL
+
+        // Validate request data
+        if (!id) {
+            throw new ValidationError('id are required for update');
+        }
+
+        const oUpdatedRecord = await UserAmount.updateUserAmountById(id,{transaction_status:'completed'});
+        console.log(id);
+        // Send a success response
+        res.status(200).json({ status: 200, message: 'Debit record updated successfully', body: oUpdatedRecord });
+    } catch (error) {
+        console.error(error);
+        if (error instanceof ValidationError) {
+            res.status(error.statusCode).json({ status: 400, message: error.message });
+        } else {
+            // Generic error handling
+            res.status(500).json({ status: 500, error: 'Internal Server Error' });
+        }
+    }
+};
+
+
 
 
 
@@ -90,4 +159,7 @@ const fetchDebitRecordByUserId = async (req,res)=>{
 module.exports = {
     InsertDebitOrder,
     fetchDebitRecordByUserId,
+    fetchAllDebitRecord,
+    updateDebitRecord,
+    fetchAllDebitDetialsWithBanksById,
 };

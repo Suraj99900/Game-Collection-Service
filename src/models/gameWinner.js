@@ -134,6 +134,7 @@ async function fetchRecordByUserIdAndType(userID, sType, gameType) {
     }
 }
 
+
 module.exports = {
     insertRecord,
     updateRecord,
