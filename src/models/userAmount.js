@@ -1,10 +1,13 @@
 const mongoose = require('mongoose');
+const moment = require('moment');
 
 const userAmountSchema = new mongoose.Schema({
     user_id: { type: String, required: true },
     available_amount: { type: Number, required: true },
     transaction_type: { type: Number, required: true },
     value: { type: Number, required: true },
+    transaction_status: { type: String, default: "" },
+    debit_user_genrated: { type: Boolean, default: false },
     status: { type: String, default: 'active' },
     deleted: { type: Boolean, default: false },
     addedOn: { type: Date, default: Date.now },
@@ -55,4 +58,27 @@ const invalidateUserAmount = async (userId) => {
     }
 }
 
-module.exports = { currentBalanceByUserId, UserAmount, insertUserAmount, updateUserAmount, invalidateUserAmount };
+const fetchDebitRecordByUserId = async (userId)=>{
+    try {
+        const oResult = await UserAmount.find({
+            user_id:userId,transaction_type:2,transaction_status:"pending",debit_user_genrated:true
+        }).sort({ addedOn: -1 });
+
+        return oResult;
+    } catch (error) {
+        throw (error)
+    }
+}
+
+// Static method to count records for a user on a specific day
+const countRecordsForUserOnDay = async (userId, day) =>{
+    const startOfDay = moment(day).startOf('day');
+    const endOfDay = moment(day).endOf('day');
+    return await UserAmount.find({
+        user_id: userId,transaction_type:2,transaction_status:"pending",debit_user_genrated:true,
+        addedOn: { $gte: startOfDay, $lte: endOfDay },
+    });
+};
+
+
+module.exports = { currentBalanceByUserId, UserAmount, insertUserAmount, updateUserAmount, invalidateUserAmount, fetchDebitRecordByUserId ,countRecordsForUserOnDay};
