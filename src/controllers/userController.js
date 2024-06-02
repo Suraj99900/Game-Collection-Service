@@ -5,12 +5,15 @@ const crypto = require('crypto');
 const Otp = require('../models/otp');
 const UserAmount = require('../models/userAmount');
 const bcrypt = require('bcrypt');
+const refercodeModal = require('../models/refer');
+const number = require('mongoose/lib/cast/number');
+const { REFER_AMOUNT } = require('../config');
 const saltRounds = 10; // Number of salt rounds for bcrypt
 
 
 const createUser = async (req, res) => {
     try {
-        const { username, phoneNumber, otp, password, status, deleted } = req.body;
+        const { username, phoneNumber, otp, referCode, password, status, deleted } = req.body;
 
         // Validate request data
         if (!username || !phoneNumber || !otp || !password) {
@@ -24,16 +27,16 @@ const createUser = async (req, res) => {
             deleted: false,
             expirationTime: { $gt: new Date() },
         });
-
+        let savedUser;
         if (activeOtp) {
             // Hash the password
             const hashedPassword = await bcrypt.hash(password, saltRounds);
 
             // Create a new user instance with the provided data and hashed password
-            const user = await User.createUser(username, phoneNumber, hashedPassword, status, false);
+            const user = await User.createUser(username, phoneNumber, hashedPassword, referCode, status, false);
 
             // Save the user to the database
-            let savedUser = await user.save();
+            savedUser = await user.save();
             // Create a new UserAmount instance for the user
             const userAmountData = {
                 user_id: savedUser.id,
@@ -44,12 +47,46 @@ const createUser = async (req, res) => {
 
             const userAmount = await UserAmount.insertUserAmount(userAmountData);
             await userAmount.save();
+
+            // validate ReferCode or not
+            if (referCode) {
+                const validateReferCode = await refercodeModal.fetchAllReferByReferCode(referCode);
+                if (validateReferCode.length > 0) {
+                    var count = number(validateReferCode[0].count) + 1;
+                    // refer code used 
+                    const aData = {
+                        count,
+                    };
+                    const oResultReferCode = refercodeModal.updateReferCode(referCode, aData);
+                    var sUserId = validateReferCode[0].user_id;
+                    console.log(sUserId);
+                    const userAmountDetails = await UserAmount.currentBalanceByUserId(sUserId);
+
+                    if (userAmountDetails) {
+                        var InvalidResult = await UserAmount.invalidateUserAmount(sUserId);
+                    }
+                    if (InvalidResult) {
+                        var newAmount = userAmountDetails.available_amount + REFER_AMOUNT.AMOUNT;
+                        const userAmountData = {
+                            user_id: sUserId,
+                            available_amount: newAmount,
+                            value: REFER_AMOUNT.AMOUNT,
+                            transaction_type: 1,
+                        };
+
+                        const userAmount = await UserAmount.insertUserAmount(userAmountData);
+                        await userAmount.save();
+                    }
+                }
+
+            }
+
         } else {
             throw new ValidationError('Please enter a valid otp');
         }
 
         // Respond with a success message
-        res.status(201).json({ status: 200, message: 'User created successfully' });
+        res.status(201).json({ status: 200, message: 'User created successfully', body: savedUser });
     } catch (error) {
         console.error(error);
 

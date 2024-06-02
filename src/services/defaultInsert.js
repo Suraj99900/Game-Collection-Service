@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const TransactionType = require('../models/transactionType'); // Adjust the path as needed
 const Client = require('../models/client');
+const NumberColorMaster = require('../models/numbercolormasters');
 const crypto = require('crypto');
 // Connect to MongoDB
 mongoose.connect('mongodb://localhost:27017/gpm', { useNewUrlParser: true, useUnifiedTopology: true });
@@ -35,9 +36,9 @@ const clientGenrate = async () => {
         mongoose.connect('mongodb://localhost:27017/gpm', { useNewUrlParser: true, useUnifiedTopology: true });
 
         // Check if the Client is already present or not
-        const existingClient = await Client.findOne({ name: 'Admin' }); // Update the condition as needed
+        const existingClient = await Client.fetchClientByName('Admin'); // Update the condition as needed
 
-        if (!existingClient) {
+        if (existingClient.length === 0) {
             // Generate a 32-bit hash for the client_key (you can use a library for hashing)
             const client_key = generate32BitHash('Temp@123'); // Replace with your actual hashing logic
 
@@ -49,7 +50,7 @@ const clientGenrate = async () => {
             const description = 'Auto Genrate Row';
 
             // Create the client document
-            const newClient = new Client({
+            const newClient = Client.insertClient({
                 client_id: client_id.toString(), // Convert client_id to string
                 client_key,
                 name,
@@ -101,11 +102,39 @@ const generateRandomAlphaNumeric = (length) => {
     return result;
 };
 
+// Function to seed default number color masters
+const seedNumberColorMasters = async () => {
+    try {
+        // Check if there are existing entries
+        const count = await NumberColorMaster.fetchAllNumberColorMasters();
+        if (count.length === 0) {
+            // Insert default entries
+            const defaultNumberColorMasters = [
+                { color: 'green', numbers: [1, 3, 7, 9], status: 'active', deleted: false, addedOn: new Date("2024-03-20T15:54:45.300Z") },
+                { color: 'red', numbers: [2, 4, 6, 8], status: 'active', deleted: false, addedOn: new Date("2024-03-20T15:54:45.316Z") },
+                { color: 'violet', numbers: [0, 5], status: 'active', deleted: false, addedOn: new Date("2024-03-20T15:54:45.323Z") }
+            ];
+            defaultNumberColorMasters.forEach(async aData => {
+                console.log(aData);
+                await NumberColorMaster.createNumberColorMaster(aData);
+            });
+           
+            console.log('Default NumberColorMasters seeded successfully.');
+        } else {
+            console.log('NumberColorMasters already exist. Skipping seeding.');
+        }
+    } catch (error) {
+        console.error('Error seeding NumberColorMasters:', error);
+    }
+};
+
 
 // Seed default transaction types
 seedTransactionTypes();
 
 clientGenrate();
+// Seed default number color masters
+seedNumberColorMasters();
 
 setTimeout(() => {
     mongoose.connection.close();

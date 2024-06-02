@@ -1,9 +1,10 @@
 const mongoose = require('mongoose');
 
 const userSchema = new mongoose.Schema({
-    username: { type: String, required: true, unique: true },
+    username: { type: String, required: true },
     phoneNumber: { type: String, required: true, unique: true },
     password: { type: String, required: true },
+    refercode :{type:String,require: true},
     status: { type: String, default: 'active' },
     deleted: { type: Boolean, default: false },
     addedOn: { type: Date, default: Date.now },
@@ -33,11 +34,12 @@ const checkUserExist = async (sPhoneNumber)=>{
     return User.exists({ phoneNumber: sPhoneNumber });
 };
 
-const createUser = async (username,phoneNumber,hashedPassword,status = 'active',deleted = false)=>{
+const createUser = async (username,phoneNumber,hashedPassword,sReferCode = "",status = 'active',deleted = false)=>{
     return new User({
         username,
         phoneNumber,
         password: hashedPassword,
+        refercode:sReferCode,
         status: status || 'active',
         deleted: deleted || false,
     });

@@ -10,11 +10,11 @@ const saltRounds = 10; // Number of salt rounds for bcrypt
 
 const createStaff = async (req, res) => {
     try {
-        const { staffname, phoneNumber, otp, password, status, deleted, key } = req.body;
+        const { staffname, phoneNumber, otp, password, staffType ,staffTypeName, key } = req.body;
 
         // Validate request data
-        if (!staffname || !phoneNumber || !otp || !password || !key) {
-            throw new ValidationError('Staffname, phone, key, otp, and password are required');
+        if (!staffname || !phoneNumber || !otp || !password || !key || !staffType) {
+            throw new ValidationError('Staffname, phone, key, otp, staffType and password are required');
         }
 
         // check clientId is valid or not 
@@ -37,7 +37,7 @@ const createStaff = async (req, res) => {
             const hashedPassword = await bcrypt.hash(password, saltRounds);
 
             // Create a new Staff instance with the provided data and hashed password
-            const staff = await Staff.createStaff(staffname, phoneNumber, hashedPassword, status, false);
+            const staff = await Staff.createStaff(staffname, phoneNumber, hashedPassword,staffType,staffTypeName, "active", false);
 
             // Save the Staff to the database
             let savedStaff = await staff.save();

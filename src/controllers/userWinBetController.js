@@ -7,8 +7,8 @@ const insertWinUserBet = async (req, res) => {
     const { period, user_id, type, color, number, amount } = req.body;
     try {
         // Validate request data
-        if (!type || !period || !user_id || !color || !number || !amount) {
-            throw new ValidationError('type, period, user_id, color, number, and amount are required');
+        if (!type || !period || !user_id || !color || !amount) {
+            throw new ValidationError('type, period, user_id, color, and amount are required');
         }
 
         // Extra changes...
@@ -21,7 +21,7 @@ const insertWinUserBet = async (req, res) => {
             throw new ValidationError('Amount is less.');
         }
         // Adjust amount as needed
-        const adjustedAmount = amount - 3;
+        const adjustedAmount = amount - 0.03;
 
         if (userAmountDetails) {
             const InvalidResult = await UserAmount.invalidateUserAmount(user_id);
@@ -82,7 +82,7 @@ const fetchUserWinRecord = async (req, res) => {
         if (aUserWinRecord) {
             res.status(200).json({ status: 200, message: 'Win User Bet Record fetch successfully', data: aUserWinRecord });
         } else {
-            res.status(500).json({ status: 500, error: 'Error While Inserting Data' });
+            res.status(500).json({ status: 500, error: 'Error While fetch Data' });
         }
     } catch (error) {
         console.error(error);
@@ -109,8 +109,37 @@ const fetchUserLossRecord = async(req,res)=>{
         if (aUserLossRecord) {
             res.status(200).json({ status: 200, message: 'Loass user bet record fetch successfully', data: aUserLossRecord });
         } else {
-            res.status(500).json({ status: 500, error: 'Error While Inserting Data' });
+            res.status(500).json({ status: 500, error: 'Error While fetch Data' });
         }
+    } catch (error) {
+        console.error(error);
+
+        if (error instanceof ValidationError) {
+            res.status(400).json({ status: 400, error: error.message });
+        } else {
+            res.status(500).json({ status: 500, error: 'Internal Server Error' });
+        }
+    }
+}
+
+const fetchWinLossRecord = async (req,res)=>{
+
+    const { gameType, user_id } = req.query;
+
+    try {
+        // Validate request data
+        if (!gameType || !user_id) {
+            throw new ValidationError('gameType, user_id are required');
+        }
+
+        const aUserWinLossData = await winUserBetModel.fetchWinLossRecords(user_id,gameType);
+
+        if (aUserWinLossData) {
+            res.status(200).json({ status: 200, message: 'user bet record fetch successfully', data: aUserWinLossData });
+        } else {
+            res.status(500).json({ status: 500, error: 'Error While fetch data' });
+        }
+        
     } catch (error) {
         console.error(error);
 
@@ -148,4 +177,5 @@ module.exports = {
     fetchUserWinRecord,
     fetchUserLossRecord,
     fetchWinGameActiveTableData,
+    fetchWinLossRecord,
 };

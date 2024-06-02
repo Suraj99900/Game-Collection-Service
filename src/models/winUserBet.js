@@ -5,7 +5,7 @@ const winGameUserBetSchema = new Schema({
     user_id: { type: String, required: true },
     type: { type: String, required: true },
     color: { type: String, required: true },
-    number: { type: Number, required: true },
+    number: { type: Number, required: false },
     amount: { type: String, required: true },
     isWin: { type: Boolean, required: true },
     status: { type: String, default: 'active' },
@@ -121,11 +121,131 @@ async function fetchLastActiveRecord(type) {
     }
 }
 
-async function fetchLossRecord(iUserId,sType) {
+async function fetchLossRecord(iUserId, sType) {
     try {
         const result = await winGameUserBet
-            .find({ status: 'active', deleted: false, type: sType ,user_id:iUserId,isWin:false })
+            .find({ status: 'active', deleted: false, type: sType, user_id: iUserId, isWin: false })
             .sort({ addedOn: -1 });
+        return result;
+    } catch (error) {
+        throw error;
+    }
+}
+
+async function fetchWinLossRecords(iUserId, sType) {
+    try {
+        const result = await winGameUserBet.aggregate([
+            {
+                $match: {
+                    user_id: iUserId,
+                    type: sType,
+                }
+            },
+            {
+                $addFields: {
+                    winGameId: {
+                        $toString: "$_id",
+                    },
+                },
+            },
+            {
+                $lookup: {
+                    from: "wingames",
+                    localField: "period",
+                    foreignField: "period",
+                    as: "aWingameResult",
+                },
+            },
+            {
+                $lookup: {
+                    from: "gamewinners",
+                    localField: "winGameId",
+                    foreignField: 'gameid',
+                    as: "isWinData",
+                },
+            },
+            {
+                $addFields: {
+                    includeAllData: {
+                        $cond: [
+                            {
+                                $gt: [
+                                    {
+                                        $size: "$isWinData",
+                                    },
+                                    0,
+                                ],
+                            },
+                            true,
+                            false,
+                        ],
+                    },
+                },
+            },
+            {
+                $unwind: "$aWingameResult",
+            },
+            {
+                $match: {
+                    $expr: {
+                        $eq: ["$type", "$aWingameResult.type"],
+                    },
+                    "aWingameResult.status" : "inactive",
+                },
+            },
+            {
+                $group: {
+                    _id: "$_id",
+                    status: {
+                        $first: "$status",
+                    },
+                    addedOn: {
+                        $first: "$addedOn",
+                    },
+                    period: {
+                        $first: "$period",
+                    },
+                    type: {
+                        $first: "$type",
+                    },
+                    color: {
+                        $first: "$color",
+                    },
+                    number: {
+                        $first: "$number",
+                    },
+                    isWin: {
+                        $first: "$isWin",
+                    },
+                    amount: {
+                        $first: "$amount",
+                    },
+                    isWinData: {
+                        $first: {
+                            $cond: [
+                                {
+                                    $eq: [
+                                        {
+                                            $size: "$isWinData",
+                                        },
+                                        0,
+                                    ],
+                                },
+                                null,
+                                {
+                                    $arrayElemAt: ["$isWinData", 0],
+                                },
+                            ],
+                        },
+                    },
+                },
+            },
+            {
+                $sort: {
+                    addedOn: -1,
+                },
+            },
+        ]);
         return result;
     } catch (error) {
         throw error;
@@ -143,4 +263,5 @@ module.exports = {
     fetchRecordByUserId,
     fetchRecordByTypePeriod,
     fetchLossRecord,
+    fetchWinLossRecords,
 };

@@ -12,10 +12,28 @@ const client = mongoose.model('client', clientSchema);
 
 const fetchClientById = async (sClientId) => {
     try {
-        return client.find({'client_id': sClientId})
-    }  catch (error) {
+        return client.find({ 'client_id': sClientId })
+    } catch (error) {
         throw error;
     }
 }
 
-module.exports = {client,fetchClientById};
+const fetchClientByName = async (sName) => {
+    try {
+        return client.find({ 'name': sName })
+    } catch (error) {
+        throw error;
+    }
+}
+
+const insertClient = async (aData) => {
+    try {
+        const oClientResult = client.create(aData);
+        await oClientResult.save();
+        return oClientResult;
+    } catch (error) {
+        throw error;
+    }
+}
+
+module.exports = { client, fetchClientById, fetchClientByName, insertClient };

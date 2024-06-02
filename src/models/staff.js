@@ -3,6 +3,8 @@ const mongoose = require('mongoose');
 const StaffSchema = new mongoose.Schema({
     staffname: { type: String, required: true, unique: true },
     phoneNumber: { type: String, required: true, unique: true },
+    staffType: { type: String, required: true },
+    staffTypeName: { type: String, required: true },
     password: { type: String, required: true },
     status: { type: String, default: 'active' },
     deleted: { type: Boolean, default: false },
@@ -33,11 +35,13 @@ const checkStaffExist = async (sPhoneNumber) => {
     return Staff.exists({ phoneNumber: sPhoneNumber });
 };
 
-const createStaff = async (staffname, phoneNumber, hashedPassword, status = 'active', deleted = false) => {
+const createStaff = async (staffname, phoneNumber, hashedPassword,staffType,staffTypeName, status = 'active', deleted = false) => {
     return new Staff({
         staffname,
         phoneNumber,
         password: hashedPassword,
+        staffType: staffType,
+        staffTypeName:staffTypeName,
         status: status || 'active',
         deleted: deleted || false,
     });

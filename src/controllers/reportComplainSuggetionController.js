@@ -15,7 +15,7 @@ const insertReportComplaint = async (req, res) => {
     // Use a unique name for the file to avoid conflicts
     const fileName = Date.now() + '-' + uploadedFile.name;
 
-    uploadedFile.mv('D:/InstalledApp/Xampp/htdocs/project/gammingProjectAPI/uploads/' + fileName, async (err) => {
+    uploadedFile.mv('D:/InstalledApp/Xampp/htdocs/project/Game-Collection-Service/uploads/' + fileName, async (err) => {
         if (err) {
             return res.status(500).json({ status: 500, message: err });
         }

@@ -22,7 +22,9 @@ const InsertDebitOrder = async (req, res) => {
 
         // Fetch Preivous Amount
         const userAmountDetails = await UserAmount.currentBalanceByUserId(user_id);
-
+        if (userAmountDetails.available_amount < value) {
+            throw new ValidationError('Dont have a valid amount to debit...');
+        }
         if (userAmountDetails) {
             var InvalidResult = await UserAmount.invalidateUserAmount(user_id);
         }
